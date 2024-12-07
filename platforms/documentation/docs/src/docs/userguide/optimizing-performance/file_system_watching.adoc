@@ -1,4 +1,4 @@
-// Copyright (C) 2023 Gradle, Inc.
+// Copyright (C) 2024 Gradle, Inc.
 //
 // Licensed under the Creative Commons Attribution-Noncommercial-ShareAlike 4.0 International License.;
 // you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ File system watching supports the following file system types:
 
 Gradle also supports VirtualBox's shared folders.
 
-Network file systems like Samba and NFS are not supported.
+Network file systems like Samba and NFS are not supported. Microsoft Dev Drives (ReFS) are also not supported.
 
 == Unsupported File Systems
 
