@@ -26,6 +26,7 @@ import org.gradle.api.internal.tasks.testing.results.TestListenerInternal;
 import org.gradle.api.tasks.testing.TestDescriptor;
 import org.gradle.api.tasks.testing.TestFailure;
 import org.gradle.api.tasks.testing.TestFailureDetails;
+import org.gradle.api.tasks.testing.TestMetadataEvent;
 import org.gradle.api.tasks.testing.TestOutputEvent;
 import org.gradle.api.tasks.testing.TestResult;
 import org.gradle.internal.logging.text.StyledTextOutput;
@@ -101,11 +102,11 @@ public class SimpleTestEventLogger implements TestListenerInternal {
                 if (result.getSuccessfulTestCount() > 0) {
                     output.format(", %d succeeded", result.getSuccessfulTestCount());
                 }
-                if (result.getSkippedTestCount() > 0) {
-                    output.format(", %d skipped", result.getSkippedTestCount());
-                }
                 if (result.getFailedTestCount() > 0) {
                     output.format(", %d failed", result.getFailedTestCount());
+                }
+                if (result.getSkippedTestCount() > 0) {
+                    output.format(", %d skipped", result.getSkippedTestCount());
                 }
                 output.println();
             }
@@ -114,6 +115,11 @@ public class SimpleTestEventLogger implements TestListenerInternal {
 
     @Override
     public void output(TestDescriptorInternal testDescriptor, TestOutputEvent event) {
+        // ignored
+    }
+
+    @Override
+    public void metadata(TestDescriptorInternal testDescriptor, TestMetadataEvent event) {
         // ignored
     }
 
