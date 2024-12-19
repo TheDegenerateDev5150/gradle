@@ -1,4 +1,4 @@
-// Copyright (C) 2023 Gradle, Inc.
+// Copyright (C) 2024 Gradle, Inc.
 //
 // Licensed under the Creative Commons Attribution-Noncommercial-ShareAlike 4.0 International License.;
 // you may not use this file except in compliance with the License.
@@ -390,7 +390,7 @@ _Default is `.gradle`._
 `org.gradle.problems.report=(true|false)`::
 
 Enable (`true`) or disable (`false`) the generation of `build/reports/problems-report.html`. `true` is the default.
-The report is generated with problems provided to the <<implementing_gradle_plugins_binary.adoc#sec:reporting_problems,Problems API>>.
+The report is generated with problems provided to the <<reporting_problems.adoc#sec:reporting_problems,Problems API>>.
 
 `org.gradle.unsafe.isolated-projects=(true,false)`::
 Enables project isolation, which enables configuration caching.
