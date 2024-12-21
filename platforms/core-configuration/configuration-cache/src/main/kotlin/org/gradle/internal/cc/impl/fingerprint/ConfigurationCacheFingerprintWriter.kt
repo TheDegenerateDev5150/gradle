@@ -21,6 +21,7 @@ import org.gradle.api.Describable
 import org.gradle.api.artifacts.ModuleVersionIdentifier
 import org.gradle.api.artifacts.component.ModuleComponentIdentifier
 import org.gradle.api.artifacts.component.ModuleComponentSelector
+import org.gradle.api.internal.SettingsInternal
 import org.gradle.api.internal.artifacts.configurations.dynamicversion.Expiry
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.ChangingValueDependencyResolutionListener
 import org.gradle.api.internal.file.FileCollectionFactory
@@ -30,6 +31,7 @@ import org.gradle.api.internal.file.FileTreeInternal
 import org.gradle.api.internal.file.collections.DirectoryFileTreeFactory
 import org.gradle.api.internal.file.collections.FileCollectionObservationListener
 import org.gradle.api.internal.file.collections.FileSystemMirroringFileTree
+import org.gradle.api.internal.project.ProjectIdentity
 import org.gradle.api.internal.project.ProjectState
 import org.gradle.api.internal.provider.ValueSourceProviderFactory
 import org.gradle.api.internal.provider.sources.EnvironmentVariableValueSource
@@ -44,12 +46,13 @@ import org.gradle.api.provider.ValueSourceParameters
 import org.gradle.api.tasks.util.PatternSet
 import org.gradle.groovy.scripts.ScriptSource
 import org.gradle.groovy.scripts.internal.ScriptSourceListener
+import org.gradle.initialization.buildsrc.BuildSrcDetector
+import org.gradle.internal.build.BuildStateRegistry
 import org.gradle.internal.buildoption.FeatureFlag
 import org.gradle.internal.buildoption.FeatureFlagListener
 import org.gradle.internal.cc.base.services.ConfigurationCacheEnvironmentChangeTracker
 import org.gradle.internal.cc.impl.CoupledProjectsListener
 import org.gradle.internal.cc.impl.InputTrackingState
-import org.gradle.internal.cc.impl.ProjectIdentityPath
 import org.gradle.internal.cc.impl.UndeclaredBuildInputListener
 import org.gradle.internal.cc.impl.fingerprint.ConfigurationCacheFingerprint.InputFile
 import org.gradle.internal.cc.impl.fingerprint.ConfigurationCacheFingerprint.InputFileSystemEntry
@@ -95,6 +98,7 @@ class ConfigurationCacheFingerprintWriter(
     private val workExecutionTracker: WorkExecutionTracker,
     private val environmentChangeTracker: ConfigurationCacheEnvironmentChangeTracker,
     private val inputTrackingState: InputTrackingState,
+    private val buildStateRegistry: BuildStateRegistry,
 ) : ValueSourceProviderFactory.ValueListener,
     ValueSourceProviderFactory.ComputationListener,
     WorkInputListener,
@@ -197,11 +201,23 @@ class ConfigurationCacheFingerprintWriter(
      */
     fun close() {
         synchronized(this) {
+            captureBuildSrcPresence()
             closestChangingValue?.let {
                 buildScopedSink.write(it)
             }
         }
         CompositeStoppable.stoppable(buildScopedWriter, projectScopedWriter).stop()
+    }
+
+    private
+    fun captureBuildSrcPresence() {
+        buildStateRegistry.visitBuilds { buildState ->
+            val candidateBuildSrc = File(buildState.buildRootDir, SettingsInternal.BUILD_SRC)
+            val valid = BuildSrcDetector.isValidBuildSrcBuild(candidateBuildSrc)
+            if (!valid) {
+                buildScopedSink.write(ConfigurationCacheFingerprint.MissingBuildSrcDir(candidateBuildSrc))
+            }
+        }
     }
 
     override fun scriptSourceObserved(scriptSource: ScriptSource) {
@@ -527,9 +543,9 @@ class ConfigurationCacheFingerprintWriter(
         return simplifyingVisitor.simplify()
     }
 
-    fun <T> runCollectingFingerprintForProject(project: ProjectIdentityPath, action: () -> T): T {
+    fun <T> runCollectingFingerprintForProject(project: ProjectIdentity, action: () -> T): T {
         val previous = projectForThread.get()
-        val projectSink = sinksForProject.computeIfAbsent(project.identityPath) { ProjectScopedSink(host, project, projectScopedWriter) }
+        val projectSink = sinksForProject.computeIfAbsent(project.buildTreePath) { ProjectScopedSink(host, project, projectScopedWriter) }
         projectForThread.set(projectSink)
         try {
             return action()
@@ -872,14 +888,14 @@ class ConfigurationCacheFingerprintWriter(
     private
     class ProjectScopedSink(
         host: Host,
-        project: ProjectIdentityPath,
+        project: ProjectIdentity,
         private val writer: ScopedFingerprintWriter<ProjectSpecificFingerprint>
     ) : Sink(host) {
         private
-        val projectIdentityPath = project.identityPath
+        val projectIdentityPath = project.buildTreePath
 
         init {
-            writer.write(ProjectSpecificFingerprint.ProjectIdentity(project.identityPath, project.buildPath, project.projectPath))
+            writer.write(ProjectSpecificFingerprint.ProjectIdentity(project.buildTreePath, Path.path(project.buildIdentifier.buildPath), project.projectPath))
         }
 
         override fun write(value: ConfigurationCacheFingerprint, trace: PropertyTrace?) {

@@ -21,6 +21,7 @@ import org.gradle.integtests.fixtures.executer.GradleContextualExecuter
 import org.gradle.internal.reflect.validation.ValidationMessageChecker
 import org.gradle.test.precondition.Requires
 import org.gradle.test.preconditions.UnitTestPreconditions
+import org.gradle.util.GradleVersion
 import spock.lang.Issue
 
 import static org.gradle.api.internal.DocumentationRegistry.BASE_URL
@@ -75,6 +76,13 @@ class NebulaPluginsSmokeTest extends AbstractPluginValidatingSmokeTest implement
 
         then:
         runner('groovydoc', '-s')
+            .expectDeprecationWarning(
+                "Space-assignment syntax in Groovy DSL has been deprecated. " +
+                    "This is scheduled to be removed in Gradle 10.0. " +
+                    "Use assignment ('url = <value>') instead. " +
+                    "Consult the upgrading guide for further information: https://docs.gradle.org/${GradleVersion.current().version}/userguide/upgrading_version_8.html#groovy_space_assignment_syntax",
+                "https://github.com/nebula-plugins/nebula-plugin-plugin/pull/76"
+            )
             .build()
     }
 
@@ -267,7 +275,8 @@ testImplementation('junit:junit:4.7')""")
             // with CC, these are reported as config cache problems only
             runner.expectDeprecationWarningIf(GradleContextualExecuter.notConfigCache,
                 "Invocation of Task.project at execution time has been deprecated. "+
-                    "This will fail with an error in Gradle 9.0. " +
+                    "This will fail with an error in Gradle 10.0. " +
+                    "This API is incompatible with the configuration cache, which will become the only mode supported by Gradle in a future release. " +
                     "Consult the upgrading guide for further information: $BASE_URL/userguide/upgrading_version_7.html#task_project",
                 "https://github.com/nebula-plugins/gradle-dependency-lock-plugin/issues/273"
             )
@@ -277,7 +286,8 @@ testImplementation('junit:junit:4.7')""")
             // with CC, these are reported as config cache problems only
             runner.expectDeprecationWarningIf(GradleContextualExecuter.notConfigCache,
                 "Invocation of Task.project at execution time has been deprecated. "+
-                    "This will fail with an error in Gradle 9.0. " +
+                    "This will fail with an error in Gradle 10.0. " +
+                    "This API is incompatible with the configuration cache, which will become the only mode supported by Gradle in a future release. " +
                     "Consult the upgrading guide for further information: $BASE_URL/userguide/upgrading_version_7.html#task_project",
                 "https://github.com/nebula-plugins/gradle-lint-plugin/issues/412"
             )
