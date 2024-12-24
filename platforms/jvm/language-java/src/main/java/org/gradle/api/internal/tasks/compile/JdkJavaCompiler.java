@@ -19,6 +19,7 @@ import com.sun.tools.javac.util.Context;
 import org.gradle.api.JavaVersion;
 import org.gradle.api.internal.tasks.compile.processing.AnnotationProcessorDeclaration;
 import org.gradle.api.internal.tasks.compile.reflect.GradleStandardJavaFileManager;
+import org.gradle.api.problems.ProblemId;
 import org.gradle.api.problems.ProblemSpec;
 import org.gradle.api.problems.Severity;
 import org.gradle.api.problems.internal.GradleCoreProblemGroup;
@@ -71,7 +72,7 @@ public class JdkJavaCompiler implements Compiler<JavaCompileSpec>, Serializable 
         try {
             task = createCompileTask(spec, result);
         } catch (RuntimeException ex) {
-            throw problemsService.getInternalReporter().throwing(builder -> {
+            throw problemsService.getInternalReporter().throwing(ex, builder -> {
                 buildProblemFrom(ex, builder);
             });
         }
@@ -81,7 +82,7 @@ public class JdkJavaCompiler implements Compiler<JavaCompileSpec>, Serializable 
             System.err.println(diagnosticCounts);
         }
         if (!success) {
-            CompilationFailedException exception = new CompilationFailedException(result, diagnosticCounts);
+            CompilationFailedException exception = new CompilationFailedException(result, diagnosticToProblemListener.getReportedProblems(), diagnosticCounts);
             throw problemsService.getInternalReporter().throwing(exception, diagnosticToProblemListener.getReportedProblems());
         } else {
             problemsService.getInternalReporter().report(diagnosticToProblemListener.getReportedProblems());
@@ -134,7 +135,7 @@ public class JdkJavaCompiler implements Compiler<JavaCompileSpec>, Serializable 
 
     private static void buildProblemFrom(RuntimeException ex, ProblemSpec spec) {
         spec.severity(Severity.ERROR);
-        spec.id("initialization-failed", "Java compilation initialization error", GradleCoreProblemGroup.compilation().java());
+        spec.id(ProblemId.create("initialization-failed", "Java compilation initialization error", GradleCoreProblemGroup.compilation().java()));
         spec.contextualLabel(ex.getLocalizedMessage());
         spec.withException(ex);
     }

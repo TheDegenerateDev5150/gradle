@@ -125,9 +125,7 @@ import org.gradle.model.internal.registry.ModelRegistry;
 import org.gradle.model.internal.type.ModelType;
 import org.gradle.normalization.InputNormalizationHandler;
 import org.gradle.normalization.internal.InputNormalizationHandlerInternal;
-import org.gradle.plugin.software.internal.SoftwareFeatureApplicator;
 import org.gradle.plugin.software.internal.SoftwareFeaturesDynamicObject;
-import org.gradle.plugin.software.internal.SoftwareTypeRegistry;
 import org.gradle.process.ExecResult;
 import org.gradle.process.ExecSpec;
 import org.gradle.process.JavaExecSpec;
@@ -266,7 +264,7 @@ public abstract class DefaultProject extends AbstractPluginAware implements Proj
         }
         extensibleDynamicObject.addObject(taskContainer.getTasksAsDynamicObject(), ExtensibleDynamicObject.Location.AfterConvention);
 
-        DynamicObject softwareFeaturesDynamicObject = new SoftwareFeaturesDynamicObject(getSoftwareTypeRegistry(), getSoftwareFeatureApplicator(), this);
+        DynamicObject softwareFeaturesDynamicObject = getObjects().newInstance(SoftwareFeaturesDynamicObject.class, this);
         extensibleDynamicObject.addObject(softwareFeaturesDynamicObject, ExtensibleDynamicObject.Location.BeforeConvention);
 
         evaluationListener.add(gradle.getProjectEvaluationBroadcaster());
@@ -1387,23 +1385,27 @@ public abstract class DefaultProject extends AbstractPluginAware implements Proj
         ConfigureUtil.configure(configureClosure, getBuildscript());
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public Task task(String task) {
         onMutableStateAccess();
         return taskContainer.create(task);
     }
 
+    @SuppressWarnings("deprecation")
     public Task task(Object task) {
         onMutableStateAccess();
         return taskContainer.create(task.toString());
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public Task task(String task, Action<? super Task> configureAction) {
         onMutableStateAccess();
         return taskContainer.create(task, configureAction);
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public Task task(String task, Closure configureClosure) {
         onMutableStateAccess();
@@ -1415,6 +1417,7 @@ public abstract class DefaultProject extends AbstractPluginAware implements Proj
         return task(task.toString(), configureClosure);
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public Task task(Map options, String task) {
         onMutableStateAccess();
@@ -1426,6 +1429,7 @@ public abstract class DefaultProject extends AbstractPluginAware implements Proj
         return task(options, task.toString());
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public Task task(Map options, String task, Closure configureClosure) {
         onMutableStateAccess();
@@ -1521,12 +1525,6 @@ public abstract class DefaultProject extends AbstractPluginAware implements Proj
 
     @Inject
     protected abstract ListenerBuildOperationDecorator getListenerBuildOperationDecorator();
-
-    @Inject
-    protected abstract SoftwareTypeRegistry getSoftwareTypeRegistry();
-
-    @Inject
-    protected abstract SoftwareFeatureApplicator getSoftwareFeatureApplicator();
 
     @Override
     public void addDeferredConfiguration(Runnable configuration) {
