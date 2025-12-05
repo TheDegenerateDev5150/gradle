@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 the original author or authors.
+ * Copyright 2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.gradle.tooling.internal.build;
 
-package org.gradle.internal.cc.impl.models
+import org.gradle.tooling.internal.protocol.InternalProtocolInterface;
+import org.jspecify.annotations.NullMarked;
 
-import org.gradle.internal.extensions.stdlib.uncheckedCast
-import org.gradle.tooling.provider.model.UnknownModelException
+import java.io.Serializable;
 
+@NullMarked
+public class DefaultHelp implements InternalProtocolInterface, Serializable {
+    private final String helpOutput;
 
-sealed class IntermediateModel {
-    abstract fun <T> result(): T
-
-    class NoModel(val message: String) : IntermediateModel() {
-        override fun <T> result() = throw UnknownModelException(message)
+    public DefaultHelp(String helpOutput) {
+        this.helpOutput = helpOutput;
     }
 
-    class Model(val value: Any) : IntermediateModel() {
-        override fun <T> result(): T = value.uncheckedCast()
+    public String getRenderedText() {
+        return helpOutput;
     }
 }
